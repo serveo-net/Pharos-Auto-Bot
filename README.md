@@ -4,7 +4,7 @@
 
 Join [Pharos Testnet](https://testnet.pharosnetwork.xyz/experience?inviteCode=reEZLdnbFy2qCwb0)
 
-Pharos Bot is an educational chatbot designed to help users learn various concepts and topics through interactive conversations.
+Pharos Auto Bot is an educational chatbot designed to help users learn various concepts and topics through interactive conversations.
 
 ---
 
