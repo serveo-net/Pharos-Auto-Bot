@@ -1,32 +1,36 @@
 # Pharos-Auto-Bot
 
+![icon logo](https://www.google.com/imgres?q=pharos%20testnet&imgurl=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1899385457047412736%2FvfvmbKVj_400x400.jpg&imgrefurl=https%3A%2F%2Fx.com%2Fpharos_network&docid=y8NRSMJE2zKC_M&tbnid=Kbb_2gLDzQwYoM&vet=12ahUKEwiev97DgcCNAxWXPUQIHS56LLwQM3oECGsQAA..i&w=400&h=400&hcb=2&ved=2ahUKEwiev97DgcCNAxWXPUQIHS56LLwQM3oECGsQAA)
+
 Join [Pharos Testnet](https://testnet.pharosnetwork.xyz/experience?inviteCode=reEZLdnbFy2qCwb0)
 
-Bot Pharos adalah sebuah bot yang dikembangkan untuk tujuan edukasi dan pembelajaran. Bot ini dirancang untuk membantu pengguna dalam memahami berbagai konsep dan topik secara interaktif.
+# Pharos Bot
 
-## Fitur
+Pharos Bot is an educational chatbot designed to help users learn various concepts and topics through interactive conversations.
 
-- Menyediakan informasi edukatif
-- Membantu menjawab pertanyaan seputar topik tertentu
-- Interaksi pembelajaran yang menyenangkan
+## Features
 
-## Penggunaan
+- Daily claims & faucet claims (make sure you have linked your X/twitter account)
+- Error handling, and frezz
+- Return Tx-Hash to api to complete text
 
-Gunakan bot ini dengan bijak dan bertanggung jawab. Semua konten yang disediakan oleh bot ini dimaksudkan hanya untuk tujuan edukasi.
+## Usage
+
+Use this bot wisely and responsibly. All content provided by this bot is intended for educational purposes only.
 
 ## Disclaimer
 
-Bot ini dibuat semata-mata untuk tujuan pendidikan. Pengguna bertanggung jawab penuh atas penggunaan informasi yang diperoleh dari bot ini. Developer tidak bertanggung jawab atas penyalahgunaan atau kerugian yang mungkin timbul dari penggunaan bot ini.
+This bot is created solely for educational purposes. Users are fully responsible for how they use the information obtained from this bot. The developer is not liable for any misuse or damages that may result from using this bot.
 
-## Kontribusi
+## Contributing
 
-Kontribusi untuk pengembangan bot ini selalu diterima. Silakan buka issue atau pull request jika Anda ingin berkontribusi.
+Contributions to improve this bot are always welcome. Please open an issue or pull request if you'd like to contribute.
 
-## Lisensi
+## License
 
 [MIT License](LICENSE)
 
 ---
 
-Gunakan dengan bijak dan selalu prioritaskan pembelajaran yang bertanggung jawab.
+Use wisely and always prioritize responsible learning.
 
