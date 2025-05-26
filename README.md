@@ -23,7 +23,7 @@ git clone https://github.com/serveo-net/Pharos-Auto-Bot.git
 ```
 npm install
 ```
-3. Replace ```***.env***``` with your private key
+3. Replace *** ```.env``` *** with your private key
 
 ## Usage
 
