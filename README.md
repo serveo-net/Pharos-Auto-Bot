@@ -21,6 +21,7 @@ Pharos Auto Bot is an educational chatbot designed to help users learn various c
 1. Clone Repositor
    ```
    git clone https://github.com/serveo-net/Pharos-Auto-Bot.git
+   cd Pharos-Auto-Bot
    ```
 2. Installation dependencies
    ```
