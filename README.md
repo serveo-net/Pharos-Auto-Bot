@@ -15,21 +15,20 @@ Pharos Bot is an educational chatbot designed to help users learn various concep
 ## 2. How to run
 
 1. Clone Repositor
-   
-```
-git clone https://github.com/serveo-net/Pharos-Auto-Bot.git
-```
+   ```
+   git clone https://github.com/serveo-net/Pharos-Auto-Bot.git
+   ```
 2. Installation dependencies
-```
-npm install
-```
+   ```
+   npm install
+   ```
 3. Replace **.env** with your private key
-```
-nano .env
-```
+   ```
+   nano .env
+   ```
 **example :**
 
-**PRIVATE_KEYS=0x...pvkey1,0x...pvkey2,0x...pvkey3**
+*PRIVATE_KEYS=0x...pvkey1,0x...pvkey2,0x...pvkey3*
 
 4. Replace **recipients.json** with the destination wallet
 ```
