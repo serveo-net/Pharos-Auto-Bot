@@ -66,4 +66,4 @@ Use wisely and always prioritize responsible learning.
 **Donate to buy coffee**
 
 ***EVM = 0x0e6e521F6A51D45A49A62C0e5c18c57890804091***
-***Solana = C8PEvAeQoUwBVmt1Ji2dDDG3KBudu9wA9ReLpjME9X4d***
+\n***Solana = C8PEvAeQoUwBVmt1Ji2dDDG3KBudu9wA9ReLpjME9X4d***
