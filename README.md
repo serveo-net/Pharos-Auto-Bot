@@ -47,12 +47,18 @@ Pharos Auto Bot is an educational chatbot designed to help users learn various c
    **note:**
    **- must have 65 wallet addresses**
    **- replace with the wallet address you have**
-     
-7. run bot
+
+7. use screen to run continuously
+   ```
+   screen -S Pharos-Auto-Bot
+   ```
+    
+9. run bot
    ```
    node main.js
    ```
-
+10. Press **CTRL + A + D** to exit the screen without stopping the process
+    
 ## Usage
 
 Use this bot wisely and responsibly. All content provided by this bot is intended for educational purposes only.
