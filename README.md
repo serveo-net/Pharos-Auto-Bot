@@ -6,11 +6,15 @@ Join [Pharos Testnet](https://testnet.pharosnetwork.xyz/experience?inviteCode=re
 
 Pharos Bot is an educational chatbot designed to help users learn various concepts and topics through interactive conversations.
 
+---
+
 ## 1. Features
 
 - Daily claims & faucet claims (make sure you have linked your X/twitter account)
 - Error handling, and frezz
 - Return Tx-Hash to api to complete text
+
+---
 
 ## 2. How to run
 
@@ -29,35 +33,48 @@ Pharos Bot is an educational chatbot designed to help users learn various concep
    **example :**
    
    *PRIVATE_KEYS=0x...pvkey1,0x...pvkey2,0x...pvkey3*
+4. replace **proxies.txt** with your proxy ( Optional )
+   ```
+   nano proxies.txt
+   ```
+   **one proxy per line**
 
-4. Replace **recipients.json** with the destination wallet ( Optional )
+6. Replace **recipients.json** with the destination wallet ( Optional )
    ```
    nano recipients.json
    ```
-   note:
-   - must have 65 wallet addresses
-   - replace with the wallet address you have
+   **note:**
+   **- must have 65 wallet addresses**
+   **- replace with the wallet address you have**
      
-5. run bot
+7. run bot
    ```
    node main.js
    ```
-   
+
+---
+
 ## Usage
 
 Use this bot wisely and responsibly. All content provided by this bot is intended for educational purposes only.
+
+---
 
 ## Disclaimer
 
 This bot is created solely for educational purposes. Users are fully responsible for how they use the information obtained from this bot. The developer is not liable for any misuse or damages that may result from using this bot.
 
+---
+
 ## Contributing
 
 Contributions to improve this bot are always welcome. Please open an issue or pull request if you'd like to contribute.
 
+---
+
 ## License
 
-[MIT License](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 
 ---
 
