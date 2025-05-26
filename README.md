@@ -30,11 +30,19 @@ Pharos Bot is an educational chatbot designed to help users learn various concep
    
    *PRIVATE_KEYS=0x...pvkey1,0x...pvkey2,0x...pvkey3*
 
-4. Replace **recipients.json** with the destination wallet
+4. Replace **recipients.json** with the destination wallet ( Optional )
    ```
    nano recipients.json
    ```
-
+   note:
+   - must have 65 wallet addresses
+   - replace with the wallet address you have
+     
+5. run bot
+   ```
+   node main.js
+   ```
+   
 ## Usage
 
 Use this bot wisely and responsibly. All content provided by this bot is intended for educational purposes only.
@@ -55,3 +63,7 @@ Contributions to improve this bot are always welcome. Please open an issue or pu
 
 Use wisely and always prioritize responsible learning.
 
+**Donate to buy coffee**
+
+***EVM = 0x0e6e521F6A51D45A49A62C0e5c18c57890804091***
+***Solana = C8PEvAeQoUwBVmt1Ji2dDDG3KBudu9wA9ReLpjME9X4d***
