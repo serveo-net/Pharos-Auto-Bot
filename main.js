@@ -52,7 +52,7 @@ const uscdAbi = [
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 5000;
 const FREEZE_TIMEOUT = 3600000; 
-const creator = 'https://git.savero.net'
+const creator = 'https://github.savero.net'
 
 let isShuttingDown = false;
 let cachedLoginData = {};
