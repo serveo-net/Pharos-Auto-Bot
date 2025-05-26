@@ -1,6 +1,6 @@
 # Pharos-Auto-Bot
 
-![icon logo]([https://www.google.com/imgres?q=pharos%20testnet&imgurl=https%3A%2F%2Fpbs.twimg.com%2Fprofile_images%2F1899385457047412736%2FvfvmbKVj_400x400.jpg&imgrefurl=https%3A%2F%2Fx.com%2Fpharos_network&docid=y8NRSMJE2zKC_M&tbnid=Kbb_2gLDzQwYoM&vet=12ahUKEwiev97DgcCNAxWXPUQIHS56LLwQM3oECGsQAA..i&w=400&h=400&hcb=2&ved=2ahUKEwiev97DgcCNAxWXPUQIHS56LLwQM3oECGsQAA](https://www.google.com/imgres?q=pharos%20testnet&imgurl=https%3A%2F%2Fimg.cryptorank.io%2Fcoins%2Fpharos1731308644189.png&imgrefurl=https%3A%2F%2Fcryptorank.io%2Fdrophunting%2Fpharos-activity796&docid=30NEEV1qSTSODM&tbnid=7OahckdMJOovMM&vet=12ahUKEwiev97DgcCNAxWXPUQIHS56LLwQM3oECBgQAA..i&w=400&h=400&hcb=2&ved=2ahUKEwiev97DgcCNAxWXPUQIHS56LLwQM3oECBgQAA))
+![icon logo](https://github.com/serveo-net/Pharos-Auto-Bot/blob/main/download%20(36).jpeg)
 
 Join [Pharos Testnet](https://testnet.pharosnetwork.xyz/experience?inviteCode=reEZLdnbFy2qCwb0)
 
