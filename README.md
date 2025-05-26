@@ -14,8 +14,6 @@ Pharos Bot is an educational chatbot designed to help users learn various concep
 - Error handling, and frezz
 - Return Tx-Hash to api to complete text
 
----
-
 ## 2. How to run
 
 1. Clone Repositor
@@ -52,25 +50,17 @@ Pharos Bot is an educational chatbot designed to help users learn various concep
    node main.js
    ```
 
----
-
 ## Usage
 
 Use this bot wisely and responsibly. All content provided by this bot is intended for educational purposes only.
-
----
 
 ## Disclaimer
 
 This bot is created solely for educational purposes. Users are fully responsible for how they use the information obtained from this bot. The developer is not liable for any misuse or damages that may result from using this bot.
 
----
-
 ## Contributing
 
 Contributions to improve this bot are always welcome. Please open an issue or pull request if you'd like to contribute.
-
----
 
 ## License
 
