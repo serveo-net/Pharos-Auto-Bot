@@ -23,7 +23,18 @@ git clone https://github.com/serveo-net/Pharos-Auto-Bot.git
 ```
 npm install
 ```
-3. Replace *** ```.env``` *** with your private key
+3. Replace **.env** with your private key
+```
+nano .env
+```
+**example :**
+
+**PRIVATE_KEYS=0x...pvkey1,0x...pvkey2,0x...pvkey3**
+
+4. Replace **recipients.json** with the destination wallet
+```
+nano recipients.json
+```
 
 ## Usage
 
