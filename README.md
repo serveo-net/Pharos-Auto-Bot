@@ -16,11 +16,14 @@ Pharos Bot is an educational chatbot designed to help users learn various concep
 
 1. Clone Repositor
    
-  ```
-  git clone https://github.com/serveo-net/Pharos-Auto-Bot.git
-  ```
+```
+git clone https://github.com/serveo-net/Pharos-Auto-Bot.git
+```
 2. Installation dependencies
-``
+```
+npm install
+```
+3. Replace ***.env*** with your private key
 
 ## Usage
 
