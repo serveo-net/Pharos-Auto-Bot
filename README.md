@@ -1,6 +1,6 @@
 # Pharos-Auto-Bot
 
-![icon logo](https://github.com/serveo-net/Pharos-Auto-Bot/blob/main/download%20(36).jpeg)
+![icon logo](https://github.com/serveo-net/Pharos-Auto-Bot/blob/main/pharos-icon)
 
 Join [Pharos Testnet](https://testnet.pharosnetwork.xyz/experience?inviteCode=reEZLdnbFy2qCwb0)
 
