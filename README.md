@@ -13,6 +13,8 @@ Pharos Bot is an educational chatbot designed to help users learn various concep
 - Daily claims & faucet claims (make sure you have linked your X/twitter account)
 - Error handling, and frezz
 - Return Tx-Hash to api to complete text
+- multi account
+- support proxy or not if you don't want to use it
 
 ## 2. How to run
 
@@ -64,6 +66,7 @@ Contributions to improve this bot are always welcome. Please open an issue or pu
 
 ## License
 
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 
 ---
