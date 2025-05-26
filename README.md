@@ -4,8 +4,6 @@
 
 Join [Pharos Testnet](https://testnet.pharosnetwork.xyz/experience?inviteCode=reEZLdnbFy2qCwb0)
 
-# Pharos Bot
-
 Pharos Bot is an educational chatbot designed to help users learn various concepts and topics through interactive conversations.
 
 ## Features
@@ -13,6 +11,14 @@ Pharos Bot is an educational chatbot designed to help users learn various concep
 - Daily claims & faucet claims (make sure you have linked your X/twitter account)
 - Error handling, and frezz
 - Return Tx-Hash to api to complete text
+
+## How to run
+
+### 1. Clone Repositor
+```
+git clone https://github.com/serveo-net/Pharos-Auto-Bot.git
+```
+### 2. Clone Repositor
 
 ## Usage
 
