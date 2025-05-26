@@ -26,9 +26,9 @@ Pharos Bot is an educational chatbot designed to help users learn various concep
    ```
    nano .env
    ```
-**example :**
-
-*PRIVATE_KEYS=0x...pvkey1,0x...pvkey2,0x...pvkey3*
+   **example :**
+   
+   *PRIVATE_KEYS=0x...pvkey1,0x...pvkey2,0x...pvkey3*
 
 4. Replace **recipients.json** with the destination wallet
 ```
