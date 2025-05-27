@@ -466,7 +466,6 @@ const verifyFunction = async (wallet, provider, index, proxy = null) => {
         throw new Error('Transaction not yet confirmed or failed');
       }
 
-      // 5. Lakukan verifikasi
       log.loading(`Attempting verification (attempt ${verificationAttempts + 1})...`);
       const checkInUrl = `https://api.pharosnetwork.xyz/task/verify`;
       const params = {
@@ -481,7 +480,7 @@ const verifyFunction = async (wallet, provider, index, proxy = null) => {
         url: checkInUrl,
         headers: checkInData.headers,
         httpsAgent: proxy ? new HttpsProxyAgent(proxy) : null,
-        timeout: 20000 // Timeout 20 detik
+        timeout: 20000 
       });
 
       const checkIn = checkInResponse.data;
@@ -502,7 +501,6 @@ const verifyFunction = async (wallet, provider, index, proxy = null) => {
         log.warn(`Verification failed (attempt ${verificationAttempts}): ${errorMsg}`);
         
         if (verificationAttempts < MAX_VERIFICATION_ATTEMPTS) {
-          // Jika masih ada attempt tersisa, lanjutkan loop
           continue;
         } else {
           log.error(`All verification attempts failed for tx ${txhash}`);
@@ -518,7 +516,6 @@ const verifyFunction = async (wallet, provider, index, proxy = null) => {
   return false;
 };
 
-// Fungsi transferPHRS yang diperbarui
 const transferPHRS = async (wallet, provider, index) => {
   if (isShuttingDown) return null;
   
@@ -548,7 +545,6 @@ const transferPHRS = async (wallet, provider, index) => {
 
       log.info(`Transfer transaction ${index + 1} sent: ${tx.hash}`);
       
-      // Tunggu minimal 1 konfirmasi
       const receipt = await tx.wait(1);
       
       if (receipt.status === 1) {
@@ -1032,26 +1028,63 @@ const main = async () => {
     return;
   }
 
-  while (!isShuttingDown) {
+  const runFullCycle = async () => {
     try {
+      log.info('Starting new cycle...');
       for (const privateKey of privateKeys) {
         if (isShuttingDown) break;
         await processWallet(privateKey);
       }
-
-      if (!isShuttingDown) {
-        log.success('All actions completed for all wallets!');
-        log.info('Waiting for next cycle....');
-        await new Promise(resolve => setTimeout(resolve, 360000));
-      }
+      log.success('Cycle completed successfully!');
     } catch (error) {
-      log.error('Error in main loop:', error);
+      log.error('Error during cycle:', error);
+    }
+  };
+
+  const startCountdown = () => {
+    return new Promise((resolve) => {
+      const twelveHours = 12 * 60 * 60 * 1000;
+      const targetTime = Date.now() + twelveHours;
+      
+      const countdownInterval = setInterval(() => {
+        if (isShuttingDown) {
+          clearInterval(countdownInterval);
+          return resolve();
+        }
+
+        const now = Date.now();
+        const diff = targetTime - now;
+        
+        if (diff <= 0) {
+          clearInterval(countdownInterval);
+          return resolve();
+        }
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        process.stdout.write(`\rNext run in: ${hours}h ${minutes}m ${seconds}s  `);
+      }, 1000);
+    });
+  };
+
+  while (!isShuttingDown) {
+    await runFullCycle();
+    
+    if (!isShuttingDown) {
+      process.stdout.write('\n');
+      log.info('Waiting for next cycle in 12 hours...');
+      
+      await startCountdown();
+      
       if (!isShuttingDown) {
-        log.info('Retrying in 1 minute...');
-        await new Promise(resolve => setTimeout(resolve, 60000));
+        process.stdout.write('\n');
       }
     }
   }
+
+  log.info('Script shutdown completed');
 };
 
 main().catch(error => {
